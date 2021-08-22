@@ -1,13 +1,18 @@
-import { h, Component, State } from '@stencil/core';
+import { h, Component, State, Element, getAssetPath } from '@stencil/core';
 
 @Component({
   tag: 'cam-recorder',
   styleUrl: 'cam-recorder.css',
+  assetsDirs: ['assets'],
   shadow: true,
 })
 export class CamRecorder {
+  @Element() el: HTMLElement;
+
   @State() constraints: object;
+  @State() embedVideo: HTMLMediaElement;
   @State() showCamera: boolean = false;
+  @State() frontalCamera: boolean = true;
 
   connectedCallback() {
     console.log('iniciouuuu');
@@ -15,7 +20,7 @@ export class CamRecorder {
     this.constraints = {
       audio: false,
       video: {
-        facingMode: 'user',
+        facingMode: this.frontalCamera ? "user" : "environment",
         advanced: [{ torch: true }],
         // width: this.isMobile ? this.maxWidth : this.maxHeight,
         // height: this.isMobile ? this.maxHeight : this.maxWidth,
@@ -26,14 +31,18 @@ export class CamRecorder {
 
   async initCamera(constraints: object) {
     try {
-      // console.log((await navigator.mediaDevices.enumerateDevices()).filter(item => item.kind === 'videoinput'));
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      // this.handleSuccess(stream);
-      // console.log('streammm');
-      console.log(stream);
+      this.embedVideo = this.el.shadowRoot.querySelector('#gum');
+      this.embedVideo.srcObject = stream;
     } catch (error) {
       console.error('navigator.getUserMedia error:', error);
     }
+  }
+
+  changeCam() {
+    console.log("virar cam");
+    this.frontalCamera = !this.frontalCamera;
+    this.initCamera(this.constraints);
   }
 
   render() {
@@ -47,6 +56,17 @@ export class CamRecorder {
       this.showCamera && (
         <div class="container">
           <video id="gum" playsinline autoplay muted></video>
+
+          <section class="actions" id="actions">
+            {/* flash */}
+            <img src={getAssetPath('./assets/flash.svg')} />
+
+            {/* botão gravar */}
+            <img src={getAssetPath('./assets/record.svg')} />
+
+            {/* virar câmera */}
+            <img onClick={this.changeCam.bind(this)} src={getAssetPath('./assets/rotate-cam.svg')} />
+          </section>
         </div>
       )
     );
